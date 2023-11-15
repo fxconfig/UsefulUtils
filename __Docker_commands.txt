@@ -1,0 +1,43 @@
+#  安装lvm2 版本的 docker 可使用 docker compose 而不是 docker-compose
+yum remove *docker*
+yum install -y yum-utils device-mapper-persistent-data lvm2 git
+yum-config-manager --add-repo http://mirrors.aliyun.com/docker-ce/linux/centos/docker-ce.repo
+yum install docker-ce -y
+
+   docker compose -f dev.yml up --build    #创建并启动   -d  后台启动
+   docker compose -f dev.yml down          #停止当前文件夹 dev.yml 内服务
+   docker images                           #查看 images
+   docker container1 ls                    #查看运行的容器
+   docker image rm a23ada                  #删除某个镜像，  --force 强制删除
+   docker image prune -f                   #批量删除没有名字的 image
+   docker run -d image1                    #后台启动
+   docker stop/start container_name        #停止/启动个容器
+
+# 使用Docker启动多个镜像时，需要注意容器之间的网络通信。
+# 如果需要容器之间进行通信，需要在启动容器时添加--link参数
+docker run -d --name container1 image1
+docker run -d --name container2 --link container1:image1 image2
+
+sudo docker exec -it 36af35 bash       # 在容器内运行 bash，有些镜像没有 bash
+
+# docker compose 文件内添加  depends_on 属性，依赖于 services name
+# 可以让 container 直接使用 service/container 名加端口直接访问其他容器
+
+
+# 使用 compose 创建容器并运行
+# dcoker-compose.yml 可以使用同级目录下 .env 文件内的环境变量，   ${ParaName}
+# yml 文件内可以使用
+#  env_file:  # 指定容器运行时要加载的 env 变量
+#      - ./backend/.env
+
+
+
+
+
+
+
+# docker-compose.yml 命令详解
+https://blog.51cto.com/u_16099278/6692327
+
+
+

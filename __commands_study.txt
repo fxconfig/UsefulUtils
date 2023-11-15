@@ -1,0 +1,66 @@
+firewall-cmd --list-port
+firewall-cmd --list-all
+firewall-cmd --add-port=8083/tcp --zone=public --permanent
+firewall-cmd --add-port=8083/tcp --zone=public --permanent
+　　命令含义：
+　　–zone #作用域
+　　–add-port=80/tcp #添加端口，格式为：端口/通讯协议
+　　–permanent #永久生效，没有此参数重启后失效
+#关闭firewall：
+systemctl stop/start/restart/disable firewalld
+
+#列出所有服务
+systemctl list-units -all
+systemctl status service-name
+systemctl show service-name
+
+#列出文件：
+ls -la |grep python
+
+#查找进程：
+ps -l |grep 80
+kill
+
+#查看网络链接情况：
+netstat -ano |grep 80
+netstat -lnop |grep 80
+
+#查看文件大小
+du -sh /root/*
+#查看硬盘情况
+df -h 
+
+yum list installed
+
+#用户密码储存位置
+/etc/passwd
+
+
+# Watchpack Error, limit for number of file watchers reached
+# 临时增加限额    sysctl fs.inotify.max_user_watches=524288
+# 永久增加限额    echo fs.inotify.max_user_watches=524288 |sudo tee -a /etc/sysctl.conf
+#  sudo sysctl -p
+
+压缩解压
+tar -zxf xxx.zip ./sourcefolder/
+tar -zxf xxx.zip
+
+
+
+
+
+
+
+
+
+二）yum源配置方法一（阿里云源）
+1) 安装wget
+yum install -y wget
+2)备份/etc/yum.repos.d/CentOS-Base.repo文件
+cd /etc/yum.repos.d/
+mv CentOS-Base.repo CentOS-Base.repo.back
+3)下载阿里云的Centos-6.repo文件
+wget -O CentOS-Base.repo http://mirrors.aliyun.com/repo/Centos-6.repo
+4) 重新加载yum
+yum clean all
+yum makecache

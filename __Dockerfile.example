@@ -1,0 +1,34 @@
+# 使用一个基础镜像， bullseye 是 docker 镜像提供商
+FROM python:3.11-bullseye
+
+# 更新软件包列表
+RUN apt-get -y update
+
+# Install GEOS library
+RUN apt-get install -y libgeos-dev pandoc
+
+# 容器工作目录名（只针对容器有用）
+WORKDIR /code
+
+# 复制本机文件到 容器文件夹
+COPY ./requirements.txt /code/requirements.txt
+
+# 设置环境变量
+ENV MY_VAR=my_value
+
+# 安装 python 依赖项
+RUN pip install --no-cache-dir -r /code/requirements.txt --timeout 100
+
+# 复制脚本文件到 容器文件夹里， 并提升权限以便执行脚本
+#You may need to run `chmod +x ./backend/scripts/start.sh` on your host machine if you get a permission error
+COPY ./scripts/start.sh /code/scripts/start.sh
+RUN chmod +x /code/scripts/start.sh
+
+# 复制本文件夹全部内容到 容器
+COPY . /code/
+
+# 暴露端口
+EXPOSE 5432
+
+# 载入点 
+ENTRYPOINT ["bash", "/code/scripts/start.sh"]

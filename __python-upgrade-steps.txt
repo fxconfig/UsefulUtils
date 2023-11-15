@@ -1,0 +1,156 @@
+1、切换工作目录至/usr/local
+在Linux系统下，路径/usr/local相当于C:/Progrem Files/，通常安装软件时便安装到此目录下。
+
+
+注意：  先将 openssl 升级到 1.1.1 以上版本， 并 link 对应的 so 库，参看本文最后面第 7  条
+#  https://blog.csdn.net/weixin_44462773/article/details/131535382
+升级 openssl 完整命令如下：
+# 1. yum 安装编译工具 gcc
+# 2. 下载，解压，配置
+# 3. make 编译并安装
+# 4. 备份原来的 openssl 可执行，库，include 目录
+# 5. 创建新的软链接到新安装的 openssldir
+# 6. 设置系统搜索 openssl so 文件的文件夹，并更新系统配置
+# 7. 查看 openssl 版本
+########################################################################:
+yum install -y gcc perl openssl-devel
+cd /usr/local
+wget --no-check-certificate https://www.openssl.org/source/openssl-1.1.1l.tar.gz
+tar -zxf openssl-1.1.1l.tar.gz
+cd openssl-1.1.1l
+./config --prefix=/usr/local/openssl --openssldir=/etc/ssl --shared zlib
+make && make install
+mv -f /usr/bin/openssl /usr/bin/openssl.bak
+mv -f /usr/include/openssl/ /usr/inclde/openssl.bak
+mv -f /usr/lib64/libssl.so /usr/lib64/libssl.so.bak
+mv -f /usr/lib64/libcrypto.so /usr/lib64/libcrypto.so.bak
+
+ln -s /usr/local/openssl/bin/openssl /usr/bin/openssl
+ln -s /usr/local/openssl/include/openssl /usr/include/openssl
+ln -s /usr/local/openssl/lib/libssl.so.1.1 /usr/lib64/libssl.so.1.1
+ln -s /usr/local/openssl/lib/libcrypto.so.1.1 /usr/lib64/libcrypto.so.1.1
+
+echo “/usr/local/openssl/lib” >> /etc/ld.so.conf
+ldconfig -V
+openssl version
+
+###############################################################################################
+
+# 编译 python 时需要带上 ssl 支持
+# 1. 安装依赖项
+# 2. 下载目标python版本压缩包
+# 3. 解压，进入解压文件夹，配置
+# 4. make 编译并安装
+# 5. 备份原来的软连接，创建新的软连接
+# 6。 升级 pip
+#######################################################################################
+yum install -y zlib-devel bzip2 bzip2-devel readline-devel sqlite sqlite-devel openssl-devel xz xz-devel libffi-devel
+cd /usr/local
+wget http://www.python.org/ftp/python/3.11.4/Python-3.11.4.tgz
+tar -xzf Python-3.11.4.tgz     #-C /usr/local
+cd Python-3.11.4
+./configure --prefix=/usr/local/python311 --with-openssl=/usr/local/openssl
+make clean && make && make install
+
+mv -f /usr/bin/python3 /usr/bin/python3.bak
+mv -f /usr/bin/pip3 /usr/bin/pip3.bak
+ln -s /usr/local/python311/bin/python3 /usr/bin/python3
+ln -s /usr/local/python311/bin/pip3 /usr/bin/pip3
+
+python3 -m pip install --upgrade pip
+
+###########################################################################################
+命令解释：
+在Linux中通过源码安装程序时，对于解压文件，先执行./configure，后执行make，最后执行make install
+
+make 命令 是对makefile文件操作，make install 是安装命令，那么 ./configure 是干什么呢？./configure 其实就是生成 makefile 文件
+
+--prefix作用：编译的时候用来指定程序存放路径。
+　　　　不指定prefix，可执行文件默认放在/usr/local/bin，库文件默认放在/usr/local/lib，配置文件默认放在/usr/local/etc，其它的资源文件放在/usr/local/share
+
+　　　　指定prefix，直接删掉一个文件夹就够了
+
+
+
+这是由于缺少依赖造成的，可执行以下代码：
+
+
+
+6、两种版本配置方法
+
+关于配置python版本的方法大致分为两种：
+
+直接创建python3软链，利用命令 python3 调用新版本python，与自带python不冲突
+覆盖现有python，使其指向新安装的python，利用命令 python 便可调用新版本python
+所涉及命令解释
+ln命令用来为文件创建链接，链接类型分为硬链接和符号（软）链接两种，默认的连接类型是硬连接。如果要创建符号链接必须使用"-s"选项，符号链接相当于Windows下的快捷方式，即可以实现启动python时指向python3.8
+ln -s a b # 建立软连接，b指向a
+
+6.1直接创建python3软链
+查看系统执行目录下的 python pip
+ls -la /usr/bin | grep python
+ls -la /usr/bin | grep pip
+
+备份原来的 python pip 链接
+mv /usr/bin/python /usr/bin/python.bak
+mv /usr/bin/pip /usr/bin/pip.bak
+
+在/usr/bin路径下创建python3软链，指向已安装的python3
+ln -s /usr/local/python-3.11.3/bin/python3 /usr/bin/python3
+
+在/usr/bin路径下创建pip3软链，指向已安装的pip3
+ln -s /usr/local/python3/bin/pip3 /usr/bin/pip3
+此时系统中存在两个python版本：
+
+命令 python 对应的仍是默认2.7版本
+
+命令 python3 则对应新安装的3.8版本，
+
+此本方法到此便结束了，可以快乐地打出 python3 -V, pip3 -V查看对应版本了
+
+6.2  覆盖现有python，启动python时指向python3.8
+
+备份旧python与pip
+ mv /usr/bin/python /usr/bin/python2_old
+ mv /usr/bin/pip /usr/bin/pip2_old　　#第三部分的文件名可根据本机版本修改
+修改软链接
+ln -s /usr/local/python3/bin/python3 /usr/bin/python
+ln -s /usr/local/python3/bin/pip3 /usr/bin/pip
+此方法到这里已经完成一半啦，可以使用命令 python -V, pip -V查看版本
+
+根据“撑起风帆”的经验，还应该对easy_install的指向进行修改，使用python3时可能会用到（未验证），
+用到时可根据上述“修改软链接”的方法进行修改
+
+6.2.1 收尾工作
+
+由于修改了python的版本，会导致一些依赖于旧版本的程序出现错误，如yum，可进行如下配置：
+
+打开yum文件
+vim /usr/bin/yum
+文件第一行如下图：
+
+ 将python修改为旧的版本号，此处添加2.7：
+
+ 不过在安装软件时仍会报错:
+
+SyntaxError: invalid syntax
+  File "/usr/libexec/urlgrabber-ext-down", line 28
+　　except OSError, e:
+还是因为python更换的原因， 依照上述操作修改文件即可：打开/usr/libexec/urlgrabber-ext-down 文件，将 #!/usr/bin/python   修改为 #!/usr/bin/python2.7   
+
+其他工具或库如果在安装过程中也报类似错误，同法处理。
+
+此时系统仍存在两个python版本，但命令 python 对应的是新安装的3.8版本，命令 python2 才对应之前的默认2.7版本
+
+
+
+重点提示：
+7. 当用 pip 安装包时提示  ssl 问题，
+还需要更新 openssl 到指定版本，步骤同上
+安装完  设置 ssl 库   /usr/lib64/libssl.so  和 /usr/lib64/libcrypto.so 软链接到新版的库
+重新配置编译 Python
+
+8. 安装完第一时间升级 pip
+python -m pip install --upgrade pip
+虚拟环境里面 
+pip install --upgrade pip
